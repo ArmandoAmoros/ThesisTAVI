@@ -72,11 +72,11 @@ bar(2, data(2), 'FaceColor', [0.8500 0.3250 0.0980]);
 bar(3, data(3), 'FaceColor', [0.9290 0.6940 0.1250]);
 bar(4, data(4), 'FaceColor', [0.4940 0.1840 0.5560]);
 set(gca,'xtick', 1:4,'xticklabel',names);
-set(gca, 'YLim', [0 100]);
-title('Maze Average Number of Collisions');
+set(gca, 'YLim', [0 10]);
+title('2nd DOF Accidental Activation Error');
 xlabel('Devices');
-ylabel('Number Collisions');
-text(1:length(data),data,num2str(data'),'vert','bottom','horiz','center'); 
+ylabel('Percentage of Trials');
+text(1:length(data),data,num2str(data'),'vert','bottom','horiz','center','FontSize',15); 
 ax = gca; ax.FontSize = 15;
 
 
