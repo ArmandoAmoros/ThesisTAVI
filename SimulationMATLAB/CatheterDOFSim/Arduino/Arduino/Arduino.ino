@@ -12,51 +12,52 @@ float axCountPrev = 0; // Axial velocity
 float axVel = 0; // Axial velocity
 float axCountTemp = 0; // Axial velocity
 
-#define remoteAxialGain 5
-#define remoteRotatGain 0.1
+#define keyboardAxialGain 5.0
+#define keyboardRotatGain 0.1
+#define remoteAxialGain 5.0
+#define remoteRotatGain 0.01
+#define joystickAxialGain 0.1
+#define joystickRotatGain 0.001
+#define catheterAxialGain 0.01
+#define catheterRotatGain 0.01
 
 void setup() {
   Serial.begin(9600);
-  pinMode(pushOne, INPUT); // Set pushOne as INPUT
-  pinMode(pushTwo, INPUT); // Set pushOne as INPUT
+  pinMode(pushOne, INPUT_PULLUP); // Set pushOne as INPUT
+  pinMode(pushTwo, INPUT_PULLUP); // Set pushOne as INPUT
   pinMode(ledPin, OUTPUT); // Set pushOne as INPUT
 }
 
 void loop() {
   switch(device){
     case 1:
-      axVel = remoteAxialGain;
-      rotVel = remoteRotatGain;
+      axVel = keyboardAxialGain;
+      rotVel = keyboardRotatGain;
       break;
     case 2:
-      axVel = remoteAxialGain * (float)(digitalRead(pushOne) - digitalRead(pushOne));
+      axVel = - remoteAxialGain * (float)(digitalRead(pushOne) - digitalRead(pushTwo));
       
-      rotCountTemp = analogRead(potTwo);
-      rotVel = (rotCountTemp - rotCountPrev) * remoteRotatGain;
+      rotCountTemp = analogRead(potOne);
+      rotVel = getRotation(rotCountPrev, rotCountTemp, remoteRotatGain);
       rotCountPrev = rotCountTemp;
       break;
     case 3:
-      axCountTemp = analogRead(potOne);
-      axVel = (axCountTemp - axCountPrev) * remoteAxialGain;
-      axCountPrev = axCountTemp;
+      axVel = getPotMove(analogRead(potOne), 513, joystickAxialGain, 20);
       
-      rotCountTemp = analogRead(potTwo);
-      rotVel = (rotCountTemp - rotCountPrev) * remoteRotatGain;
-      rotCountPrev = rotCountTemp;
+      rotVel = -getPotMove(analogRead(potTwo), 359, joystickRotatGain, 20);
       break;
     case 4:
-      axCountTemp = analogRead(potOne);
-      axVel = (axCountTemp - axCountPrev) * remoteAxialGain;
-      axCountPrev = axCountTemp;
+      axVel = getPotMove(analogRead(potOne), 513, catheterAxialGain, 20);
       
       rotCountTemp = analogRead(potTwo);
-      rotVel = (rotCountTemp - rotCountPrev) * remoteRotatGain;
+      rotVel = -getRotation(rotCountPrev, rotCountTemp, catheterRotatGain);
       rotCountPrev = rotCountTemp;
       break;
     default:
       digitalWrite(ledPin, HIGH);
       break;
   }
+  Serial.println(rotVel);
 }
 
 void serialEvent() {
@@ -99,4 +100,31 @@ void serialEvent() {
         break;
     }
   }
+}
+
+float getRotation(float prev, float next, float gain) {
+  float temp;
+
+  temp = (next - prev) * gain;
+  if ((next - prev) > 900) {
+    temp = ((next - prev) - 1024) * gain;
+  }
+  if ((next - prev) < -900) {
+    temp = ((next - prev) + 1024) * gain;
+  }
+  if (abs(next - prev) < 5) {
+     temp = 0;
+  }
+  return temp;
+}
+
+float getPotMove(float val, float zero, float gain, float tolerance) {
+  float temp;
+
+  if (abs(val - zero) < tolerance) {
+    temp = 0;
+  } else {
+    temp = (val - zero) * gain;
+  }
+  return temp;
 }
